@@ -54,7 +54,8 @@ class SoundClassification {
         inputData.loadBuffer(inputByteBuffer)
 
         outputs = tfLite?.run(inputData.buffer, audioClip.buffer)
-        return audioClip.floatArray
+        val outData = audioClip.floatArray
+        return outData
 
     }
 

@@ -1,5 +1,6 @@
 package com.example.realtimenoiseclassifier
 
+import android.content.Context
 import android.content.res.AssetFileDescriptor
 import android.content.res.AssetManager
 import org.tensorflow.lite.DataType
@@ -10,13 +11,20 @@ import org.tensorflow.lite.Interpreter
 import org.tensorflow.lite.support.tensorbuffer.TensorBuffer
 import java.nio.ByteBuffer
 import java.nio.ByteOrder
+import org.tensorflow.lite.support.common.FileUtil
 
-class SoundClassification {
+class SoundClassification(ctx: Context) {
 
     private val modelName = "lite-model_yamnet_classification_tflite_1.tflite"
     private val inputAudioLength = 15600 // 0.975 sec
     private val clsNum = 521
     var tfLite: Interpreter? = null
+    private lateinit var labels: List<String>
+
+    init {
+        tfLite = getModel(ctx.assets, modelName)
+        labels = FileUtil.loadLabels(ctx, "noise_classes.txt")
+    }
 
     private fun loadModelFile(assetManager: AssetManager, modelPath: String): MappedByteBuffer? {
         val fileDescriptor: AssetFileDescriptor = assetManager.openFd(modelPath)
@@ -30,9 +38,7 @@ class SoundClassification {
     private fun getModel(activity: AssetManager, modelPath: String): Interpreter? {
         return loadModelFile(activity, modelPath)?.let { Interpreter(it) }
     }
-    fun initModel(activity: AssetManager){
-        tfLite = getModel(activity, modelName)
-    }
+
 
     fun makeInference(data: FloatArray): FloatArray {
 

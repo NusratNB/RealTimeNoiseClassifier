@@ -181,8 +181,7 @@ class RecordWavMasterKT(ctx: Context, path: String) {
     /* Initializing AudioRecording MIC */
     fun initRecorder(ctx: Context, path: String) {
         RECORD_WAV_PATH = path
-        sClass = SoundClassification()
-        sClass.initModel(ctx.assets)
+        sClass = SoundClassification(ctx)
         SAMPLE_RATE = validSampleRates
         val bufferSize = AudioRecord.getMinBufferSize(
             SAMPLE_RATE, AudioFormat.CHANNEL_IN_MONO,

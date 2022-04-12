@@ -17,6 +17,7 @@ import java.nio.ByteOrder
 
 
 class RecordWavMasterKT(ctx: Context, path: String) {
+    val sc = SoundClassification(ctx)
     private var mRecorder: AudioRecord? = null
     var mediaPlayer: MediaPlayer? = null
     var audioTrack: AudioTrack? = null
@@ -28,6 +29,7 @@ class RecordWavMasterKT(ctx: Context, path: String) {
     var BUFFER_SIZE_PLAYING = 0
     var isPlayingAudio = false
     var isPlayingMedia = false
+    lateinit var tempAudio: ShortArray
     private var playingThread: Thread? = null
     var fileNameMedia: String? = null
     var fileNameAudio: String? = null
@@ -43,6 +45,7 @@ class RecordWavMasterKT(ctx: Context, path: String) {
         mRecorder!!.startRecording()
         mRecording = getFile("raw")
         startBufferedWrite(mRecording)
+        noiseDetect()
     }
 
     /* Stop AudioRecording */
@@ -65,7 +68,6 @@ class RecordWavMasterKT(ctx: Context, path: String) {
         var peakIndex: Int = 0
         while (peakIndex < arrLen) {
             if (arr[peakIndex] >= thr || arr[peakIndex] <= -thr) {
-                //se supera la soglia, esci e ritorna peakindex-mezzo kernel.
                 return peakIndex
             }
             peakIndex++
@@ -202,6 +204,18 @@ class RecordWavMasterKT(ctx: Context, path: String) {
         File(RECORD_WAV_PATH).mkdir()
     }
 
+    private fun noiseDetect(){
+        Thread {
+            val init_val = 160000
+            var step = 0
+            val foundPeak = searchThreshold(mBuffer, threshold)
+            if (foundPeak > -1) {
+                tempAudio = mBuffer.sliceArray(0..init_val)
+            }
+        }.start()
+    }
+
+
     /* Writing RAW file */
     private fun startBufferedWrite(file: File?) {
         Thread {
@@ -215,17 +229,25 @@ class RecordWavMasterKT(ctx: Context, path: String) {
                 while (mIsRecording) {
                     var sum = 0.0
                     val readSize = mRecorder!!.read(mBuffer, 0, mBuffer.size)
-                    for (i in 0 until readSize) {
-                        val foundPeak = searchThreshold(mBuffer, threshold)
+
+
+                    val foundPeak = searchThreshold(mBuffer, threshold)
+
+                    // (readsize-init_val) / step = 10
+                    for (i in 0 until readSize ) {
                         if (foundPeak > -1) {
                             output.writeShort(mBuffer[i].toInt())
                             sum += (mBuffer[i] * mBuffer[i]).toDouble()
                             count +=1
                         }
+
                     }
+                    sc.makeInference(tempAudio)
+
                     if (readSize > 0) {
                         val amplitude = sum / readSize
                     }
+                   // if ((readSize-init_val))
                 }
             } catch (e: IOException) {
                 Log.e("Error writing file : ", (e.message)!!)

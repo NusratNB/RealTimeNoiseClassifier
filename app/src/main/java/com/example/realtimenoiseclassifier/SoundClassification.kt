@@ -40,7 +40,7 @@ class SoundClassification(ctx: Context) {
     }
 
 
-    fun makeInference(data: FloatArray): FloatArray {
+    fun makeInference(data: ShortArray): FloatArray {
 
         var outputs: Unit? = null
 
@@ -48,7 +48,7 @@ class SoundClassification(ctx: Context) {
         inputByteBuffer.order(ByteOrder.nativeOrder())
 
         for (i in data.indices){
-            inputByteBuffer.putFloat(data[i])
+            inputByteBuffer.putFloat((data[i].toFloat())/32768f)
         }
 
         val outputByteBuffer: ByteBuffer = ByteBuffer.allocate(4*clsNum)
@@ -61,6 +61,8 @@ class SoundClassification(ctx: Context) {
 
         outputs = tfLite?.run(inputData.buffer, audioClip.buffer)
         val outData = audioClip.floatArray
+        val maxId =  outData.maxOrNull()?.let { it1 -> outData.indexOfFirst { it == it1 }}
+        val predictedClass = labels[maxId!!]
         return outData
 
     }

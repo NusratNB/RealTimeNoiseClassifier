@@ -235,9 +235,6 @@ class RecordWavMasterKT(ctx: Context, path: String) {
                     Log.d("Inference result $i", predClass)
                 }
             }
-
-
-
         }.start()
     }
 

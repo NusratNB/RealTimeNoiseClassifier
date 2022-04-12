@@ -40,30 +40,30 @@ class SoundClassification(ctx: Context) {
     }
 
 
-    fun makeInference(data: ShortArray): FloatArray {
+    fun makeInference(data: ShortArray): String {
 
         var outputs: Unit? = null
 
-        val inputByteBuffer: ByteBuffer = ByteBuffer.allocateDirect(4*inputAudioLength )
+        val inputByteBuffer: ByteBuffer = ByteBuffer.allocateDirect(4 * inputAudioLength)
         inputByteBuffer.order(ByteOrder.nativeOrder())
 
-        for (i in data.indices){
-            inputByteBuffer.putFloat((data[i].toFloat())/32768f)
+        for (i in data.indices) {
+            inputByteBuffer.putFloat((data[i].toFloat()) / 32768f)
         }
 
-        val outputByteBuffer: ByteBuffer = ByteBuffer.allocate(4*clsNum)
+        val outputByteBuffer: ByteBuffer = ByteBuffer.allocate(4 * clsNum)
         outputByteBuffer.order(ByteOrder.nativeOrder())
 
         val audioClip = TensorBuffer.createFixedSize(intArrayOf(clsNum), DataType.FLOAT32)
         audioClip.loadBuffer(outputByteBuffer)
-        val inputData = TensorBuffer.createFixedSize(intArrayOf(1, inputAudioLength), DataType.FLOAT32)
+        val inputData =
+            TensorBuffer.createFixedSize(intArrayOf(1, inputAudioLength), DataType.FLOAT32)
         inputData.loadBuffer(inputByteBuffer)
 
         outputs = tfLite?.run(inputData.buffer, audioClip.buffer)
         val outData = audioClip.floatArray
-        val maxId =  outData.maxOrNull()?.let { it1 -> outData.indexOfFirst { it == it1 }}
-        val predictedClass = labels[maxId!!]
-        return outData
+        val maxId = outData.maxOrNull()?.let { it1 -> outData.indexOfFirst { it == it1 } }
+        return labels[maxId!!]
 
     }
 

@@ -181,7 +181,7 @@ class RecordWavMasterKT(ctx: Context, path: String) {
     }
 
     /* Initializing AudioRecording MIC */
-    fun initRecorder(ctx: Context, path: String) {
+    private fun initRecorder(ctx: Context, path: String) {
         RECORD_WAV_PATH = path
         sClass = SoundClassification(ctx)
         SAMPLE_RATE = validSampleRates
@@ -206,11 +206,33 @@ class RecordWavMasterKT(ctx: Context, path: String) {
 
     private fun noiseDetect(){
         Thread {
-            val init_val = 160000
-            var step = 0
+            val inputAudioLength = 15600
+            var stepSize = 1600
+
+            lateinit var slicedData: Array<FloatArray>
+
             val foundPeak = searchThreshold(mBuffer, threshold)
+            val currentAudioLength = mBuffer.size
+            var localNumFrames = 1
+
+            if(currentAudioLength > inputAudioLength){
+                localNumFrames = (currentAudioLength - inputAudioLength) / stepSize
+
+                slicedData = Array(localNumFrames){FloatArray(inputAudioLength)}
+                for (i in 0 until (localNumFrames)){
+                    slicedData[i] = mBuffer.slice(i*stepSize until inputAudioLength + i*stepSize)
+                }
+            }else if (currentAudioLength == inputAudioLength){
+
+                slicedData = Array(localNumFrames){FloatArray(inputAudioLength)}
+
+                for (i in 0 until (localNumFrames)){
+                    slicedData[i] = mBuffer.slice(i*stepSize until inputAudioLength + i*stepSize)
+                }
+            }
+
             if (foundPeak > -1) {
-                tempAudio = mBuffer.sliceArray(0..init_val)
+                tempAudio = mBuffer.sliceArray(0..inputAudioLength)
             }
         }.start()
     }

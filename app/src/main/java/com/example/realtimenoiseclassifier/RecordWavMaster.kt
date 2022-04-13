@@ -43,8 +43,9 @@ class RecordWavMasterKT(ctx: Context, path: String) {
         mIsRecording = true
         mRecorder!!.startRecording()
         mRecording = getFile("raw")
-        startBufferedWrite(mRecording)
         noiseDetect()
+        startBufferedWrite(mRecording)
+
     }
 
     /* Stop AudioRecording */
@@ -64,7 +65,7 @@ class RecordWavMasterKT(ctx: Context, path: String) {
 
     private fun searchThreshold(arr: ShortArray, thr: Short): Int {
         val arrLen = arr.size
-        var peakIndex: Int = 0
+        var peakIndex = 0
         while (peakIndex < arrLen) {
             if (arr[peakIndex] >= thr || arr[peakIndex] <= -thr) {
                 return peakIndex
@@ -189,6 +190,7 @@ class RecordWavMasterKT(ctx: Context, path: String) {
             AudioFormat.ENCODING_PCM_16BIT
         )
         BUFFER_SIZE_PLAYING = bufferSize
+        Log.d("bufferSize", bufferSize.toString())
         mBuffer = ShortArray(bufferSize)
         if (ActivityCompat.checkSelfPermission(
                 ctx,
@@ -206,35 +208,60 @@ class RecordWavMasterKT(ctx: Context, path: String) {
     private fun noiseDetect(){
         Thread {
             val inputAudioLength = 15600
-            var stepSize = 1600
+            val stepSize = 1600
 
-            lateinit var slicedData: Array<ShortArray>
-            val currentAudioLength = mBuffer.size
-            var localNumFrames = 1
+            while (mIsRecording){
+                var slicedData : MutableList<Short> = ArrayList()
+                val currentAudioLength = mRecorder!!.read(mBuffer, 0, mBuffer.size)
+                var localNumFrames = 1
+                Log.d("mBuffer", mRecorder!!.read(mBuffer, 0, mBuffer.size).toString())
+                var isModelAvailable = true
+                var count = 0
 
-            if(currentAudioLength > inputAudioLength){
-                localNumFrames = (currentAudioLength - inputAudioLength) / stepSize
+                Thread{
+                    for (i in 0 until currentAudioLength){
+                        slicedData[count] = mBuffer[i]
+                        count+=1
+                    }
+                }.start()
 
-                slicedData = Array(localNumFrames){ShortArray(inputAudioLength)}
-                for (i in 0 until (localNumFrames)){
-                    slicedData[i] = mBuffer.slice(i*stepSize until inputAudioLength + i*stepSize).toShortArray()
-                }
-                for (i in 0 until localNumFrames){
-                    val predClass = sc.makeInference(slicedData[i])
-                    Log.d("Inference result $i", predClass)
-                }
-            }else if (currentAudioLength == inputAudioLength){
+                Thread{
+                    if (count == 15960 && isModelAvailable){
+                        isModelAvailable=false
+                        val predClass = sc.makeInference(slicedData.toShortArray())
+                        slicedData = ArrayList()
+                        count = 0
+                        isModelAvailable = true
+                        Log.d("Inference result ", predClass)
+                    }
+                }.start()
 
-                slicedData = Array(localNumFrames){ShortArray(inputAudioLength)}
 
-                for (i in 0 until (localNumFrames)){
-                    slicedData[i] = mBuffer.slice(i*stepSize until inputAudioLength + i*stepSize).toShortArray()
-                }
-                for (i in 0 until localNumFrames){
-                    val predClass = sc.makeInference(slicedData[i])
-                    Log.d("Inference result $i", predClass)
-                }
+//                if(currentAudioLength > inputAudioLength){
+//                    localNumFrames = (currentAudioLength - inputAudioLength) / stepSize
+//
+//                    slicedData = Array(localNumFrames){ShortArray(inputAudioLength)}
+//                    for (i in 0 until (localNumFrames)){
+//                        slicedData[i] = mBuffer.slice(i*stepSize until inputAudioLength + i*stepSize).toShortArray()
+//                    }
+//                    for (i in 0 until localNumFrames){
+//                        val predClass = sc.makeInference(slicedData[i])
+//                        Log.d("Inference result $i", predClass)
+//                    }
+//                }else if (currentAudioLength == inputAudioLength){
+//
+//                    slicedData = Array(localNumFrames){ShortArray(inputAudioLength)}
+//
+//                    for (i in 0 until (localNumFrames)){
+//                        slicedData[i] = mBuffer.slice(i*stepSize until inputAudioLength + i*stepSize).toShortArray()
+//                    }
+//                    for (i in 0 until localNumFrames){
+//                        val predClass = sc.makeInference(slicedData[i])
+//                        Log.d("Inference result $i", predClass)
+//                    }
+//                }
             }
+
         }.start()
     }
 
@@ -256,12 +283,11 @@ class RecordWavMasterKT(ctx: Context, path: String) {
 
                     val foundPeak = searchThreshold(mBuffer, threshold)
 
-                    // (readsize-init_val) / step = 10
                     for (i in 0 until readSize ) {
                         if (foundPeak > -1) {
                             output.writeShort(mBuffer[i].toInt())
                             sum += (mBuffer[i] * mBuffer[i]).toDouble()
-                            count +=1
+
                         }
 
                     }

@@ -3,6 +3,7 @@ package com.example.realtimenoiseclassifier
 import android.content.Context
 import android.content.res.AssetFileDescriptor
 import android.content.res.AssetManager
+import android.util.Log
 import org.tensorflow.lite.DataType
 import java.io.FileInputStream
 import java.nio.MappedByteBuffer
@@ -63,6 +64,7 @@ class SoundClassification(ctx: Context) {
         outputs = tfLite?.run(inputData.buffer, audioClip.buffer)
         val outData = audioClip.floatArray
         val maxId = outData.maxOrNull()?.let { it1 -> outData.indexOfFirst { it == it1 } }
+        Log.d("SoundClassifier result", labels[maxId!!])
         return labels[maxId!!]
 
     }

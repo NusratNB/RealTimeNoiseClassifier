@@ -40,16 +40,28 @@ class SoundClassification(ctx: Context) {
         return loadModelFile(activity, modelPath)?.let { Interpreter(it) }
     }
 
+    private fun handleAudioLength(data: ShortArray): ShortArray{
+        lateinit var slicedData: ShortArray
+        val currentAudioLength = data.size
+        val inputAudioLength = 15960
+        val begin = currentAudioLength -inputAudioLength
+        slicedData = data.slice(begin until inputAudioLength).toShortArray()
+        return slicedData
+
+    }
+
+
 
     fun makeInference(data: ShortArray): String {
 
         var outputs: Unit? = null
+        val lengthHandledData = handleAudioLength(data)
 
         val inputByteBuffer: ByteBuffer = ByteBuffer.allocateDirect(4 * inputAudioLength)
         inputByteBuffer.order(ByteOrder.nativeOrder())
 
-        for (i in data.indices) {
-            inputByteBuffer.putFloat((data[i].toFloat()) / 32768f)
+        for (i in lengthHandledData.indices) {
+            inputByteBuffer.putFloat((lengthHandledData[i].toFloat()) / 32768f)
         }
 
         val outputByteBuffer: ByteBuffer = ByteBuffer.allocate(4 * clsNum)

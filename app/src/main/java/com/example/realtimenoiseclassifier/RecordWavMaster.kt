@@ -241,17 +241,6 @@ class RecordWavMasterKT(ctx: Context, path: String) {
                     }
                 }.start()
 
-//                Thread{
-//                    try {
-//
-//                    } catch (e: Exception){
-//                        Log.e(
-//                            "Error from thread",
-//                            "$e"
-//                        )
-//                    }
-//
-//                }.start()
             }
 
         }.start()

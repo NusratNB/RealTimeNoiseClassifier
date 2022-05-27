@@ -16,15 +16,15 @@ import org.tensorflow.lite.support.common.FileUtil
 
 class SoundClassification(ctx: Context) {
 
-    private val modelName = "lite-model_yamnet_classification_tflite_1.tflite"
+    private val modelName = "float_model_08.tflite"
     private val inputAudioLength = 15600 // 0.975 sec
-    private val clsNum = 521
+    private val clsNum = 4
     var tfLite: Interpreter? = null
     private lateinit var labels: List<String>
 
     init {
         tfLite = getModel(ctx.assets, modelName)
-        labels = FileUtil.loadLabels(ctx, "noise_classes.txt")
+        labels = FileUtil.loadLabels(ctx, "noise_classes_keepin.txt")
     }
 
     private fun loadModelFile(assetManager: AssetManager, modelPath: String): MappedByteBuffer? {
@@ -43,7 +43,7 @@ class SoundClassification(ctx: Context) {
     private fun handleAudioLength(data: ShortArray): ShortArray{
         lateinit var slicedData: ShortArray
         val currentAudioLength = data.size
-        val inputAudioLength = 15960
+        val inputAudioLength = 15600
         val begin = currentAudioLength -inputAudioLength
         slicedData = data.slice(begin until inputAudioLength).toShortArray()
         return slicedData
@@ -52,7 +52,7 @@ class SoundClassification(ctx: Context) {
 
 
 
-    fun makeInference(data: ShortArray): String {
+    fun makeInference(data: ShortArray): Pair<String, Float> {
 
         var outputs: Unit? = null
         val lengthHandledData = handleAudioLength(data)
@@ -76,8 +76,9 @@ class SoundClassification(ctx: Context) {
         outputs = tfLite?.run(inputData.buffer, audioClip.buffer)
         val outData = audioClip.floatArray
         val maxId = outData.maxOrNull()?.let { it1 -> outData.indexOfFirst { it == it1 } }
-        Log.d("SoundClassifier result", labels[maxId!!])
-        return labels[maxId!!]
+        val confidence = outData[maxId!!]
+//        Log.d("SoundClassifier result", labels[maxId!!])
+        return Pair(labels[maxId!!], confidence)
 
     }
 

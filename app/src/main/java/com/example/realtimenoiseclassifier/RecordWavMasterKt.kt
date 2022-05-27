@@ -35,7 +35,7 @@ class RecordWavMasterKT(ctx: Context, path: String) {
     lateinit var sClass: SoundClassification
     private var RECORD_WAV_PATH //= Environment.getExternalStorageDirectory() + File.separator + "AudioRecord";
             : String? = null
-    var threshold: Short = 200
+    var threshold: Short = 0
     var count = 0
 
     /* Start AudioRecording */
@@ -205,12 +205,16 @@ class RecordWavMasterKT(ctx: Context, path: String) {
         File(RECORD_WAV_PATH).mkdir()
     }
 
-    private fun noiseDetect(){
+    private fun noiseDetect() {
         Thread {
-            val inputAudioLength = 15960
+            val inputAudioLength = 15600
             val stepSize = 1600
             var count = 0
             var slicedData : MutableList<Short> = ArrayList()
+//            var slicedDataTest : MutableList<Short> = ArrayList()
+            var slicedDataTest = ShortArray(1280){0}
+            var k = 0
+
 
             while (mIsRecording){
 
@@ -218,32 +222,36 @@ class RecordWavMasterKT(ctx: Context, path: String) {
                 var localNumFrames = 1
                 Log.d("mBuffer", mRecorder!!.read(mBuffer, 0, mBuffer.size).toString())
                 var isModelAvailable = true
+                slicedDataTest += mBuffer
+                k++
+                Log.d("count slicedDataTest shape", slicedDataTest.size.toString())
 
 
-                Thread{
-                    for (i in 0 until currentAudioLength){
-                        slicedData.add(mBuffer[i])
-                        count+=1
-                        Log.d("count", count.toString())
-                    }
+                for (i in 0 until currentAudioLength){
+                    slicedData.add(mBuffer[i])
+                    count+=1
+//                    Log.d("count", count.toString())
+//                    Log.d("count sliceData shape", slicedData.size.toString())
+                }
+                Log.d("isModelAvailable", isModelAvailable.toString())
+                Log.d("isModelAvailable count", count.toString())
+                Log.d("slicedDataTest slicedData", slicedData.size.toString())
+                if (count >= 15960 && isModelAvailable){
+                    isModelAvailable=false
                     Log.d("isModelAvailable", isModelAvailable.toString())
-                    Log.d("isModelAvailable count", count.toString())
-                    if (count >= 15960 && isModelAvailable){
-                        isModelAvailable=false
-                        Log.d("isModelAvailable", isModelAvailable.toString())
-                        Log.d("isModelAvailable slicedData", slicedData.size.toString())
-                        val tempSlicedData = slicedData.toShortArray()
-                        val predClass = sc.makeInference(tempSlicedData)
-                        slicedData = ArrayList()
-                        count = 0
-                        isModelAvailable = true
-                        Log.d("Inference result ", predClass)
-                    }
-                }.start()
-
+                    Log.d("isModelAvailable slicedData", slicedData.size.toString())
+                    val tempSlicedData = slicedData.toShortArray()
+                    val (predClass, confidence) = sc.makeInference(tempSlicedData)
+                    slicedData = ArrayList()
+                    count = 0
+                    Log.d("Inference: $predClass || Confidence ", confidence.toString())
+                    isModelAvailable = true
+                }
             }
 
         }.start()
+
+
     }
     private fun <T> copyArray(src: Array<T>): Array<T?> {
         return src.copyOf(src.size)

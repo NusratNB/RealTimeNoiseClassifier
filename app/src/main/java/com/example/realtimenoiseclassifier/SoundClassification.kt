@@ -19,6 +19,7 @@ class SoundClassification(ctx: Context) {
     private val modelName = "float_model_08.tflite"
     private val inputAudioLength = 15600 // 0.975 sec
     private val clsNum = 4
+    var labelOutput: String = ""
     var tfLite: Interpreter? = null
     private lateinit var labels: List<String>
 
@@ -52,7 +53,7 @@ class SoundClassification(ctx: Context) {
 
 
 
-    fun makeInference(data: ShortArray): Pair<String, Float> {
+    fun makeInference(data: ShortArray): Float {
 
         var outputs: Unit? = null
         val lengthHandledData = handleAudioLength(data)
@@ -77,9 +78,9 @@ class SoundClassification(ctx: Context) {
         val outData = audioClip.floatArray
         val maxId = outData.maxOrNull()?.let { it1 -> outData.indexOfFirst { it == it1 } }
         val confidence = outData[maxId!!]
+        labelOutput = labels[maxId!!]
 //        Log.d("SoundClassifier result", labels[maxId!!])
-        return Pair(labels[maxId!!], confidence)
-
+        return confidence
     }
 
 }

@@ -241,7 +241,8 @@ class RecordWavMasterKT(ctx: Context, path: String) {
                     Log.d("isModelAvailable", isModelAvailable.toString())
                     Log.d("isModelAvailable slicedData", slicedData.size.toString())
                     val tempSlicedData = slicedData.toShortArray()
-                    val (predClass, confidence) = sc.makeInference(tempSlicedData)
+                    val  confidence = sc.makeInference(tempSlicedData)
+                    val predClass = sc.labelOutput
                     slicedData = ArrayList()
                     count = 0
                     Log.d("Inference: $predClass || Confidence ", confidence.toString())

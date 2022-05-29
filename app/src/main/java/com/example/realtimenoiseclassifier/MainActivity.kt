@@ -56,7 +56,7 @@ class MainActivity : AppCompatActivity() {
             pathToRecords.mkdir()
         }
 
-        val audioRecorder = RecordWavMasterKT(this, pathToRecords.toString())
+//        val audioRecorder = RecordWavMasterKT(this, pathToRecords.toString())
         val audioRecorderJV = RecordWavMaster(this, pathToRecords.toString())
         var recording = true
 //        audioRecoder.initRecorder(this, pathToRecords.toString())
@@ -67,19 +67,19 @@ class MainActivity : AppCompatActivity() {
         btnRecord.setOnClickListener{
 
             if (recording){
-//                audioRecorderJV.recordWavStart()
-                audioRecorder.recordWavStart()
+                audioRecorderJV.recordWavStart()
+//                audioRecorder.recordWavStart()
 //                txtViewOutput.text = audioRecoder.noiseDetect()
                 btnRecord.text = "Recording"
                 recording = false
 
             }else{
-//                audioRecorderJV.recordWavStop()
-                audioRecorder.recordWavStop()
+                audioRecorderJV.recordWavStop()
+//                audioRecorder.recordWavStop()
                 btnRecord.text = "Start"
                 recording = true
-//                fileName = audioRecorderJV.audioName!!
-                fileName = audioRecorder.audioName!!
+                fileName = audioRecorderJV.audioName!!
+//                fileName = audioRecorder.audioName!!
                 fullAudioPath = File(fileName.toString()) //File(pathToRecords.toString(), fileName.toString())
 //                if (prevFileName.exists()){
 //                    prevFileName.delete()
@@ -90,8 +90,8 @@ class MainActivity : AppCompatActivity() {
         btnPlay = findViewById(R.id.btnPlay)
         btnPlay.setOnClickListener{
             if (fullAudioPath.exists()){
-//                audioRecorderJV.startPlaying(this, 1, fullAudioPath)
-                audioRecorder.startPlaying(this, 1, fullAudioPath)
+                audioRecorderJV.startPlaying(this, 1, fullAudioPath)
+//                audioRecorder.startPlaying(this, 1, fullAudioPath)
             }else{
                 Toast.makeText(this, "Audio doesn't exists", Toast.LENGTH_SHORT).show()
             }
